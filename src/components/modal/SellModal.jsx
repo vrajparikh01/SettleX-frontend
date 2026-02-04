@@ -7,6 +7,7 @@ import { lotSize } from "../../constants/common";
 import { useAccount } from "wagmi";
 import Loading from "../../assets/icons/loading";
 import { formatNumber, stringToNumber } from "../../utils";
+import EnsInput from "../common/EnsInput";
 
 function SellModal({ closeModal, onConfirmClick, loading = false }) {
   const account = useAccount();
@@ -18,6 +19,7 @@ function SellModal({ closeModal, onConfirmClick, loading = false }) {
 
   const [totalToken, setTotalToken] = useState();
   const [pricePerToken, setPricePerToken] = useState();
+  const [receiverAddress, setReceiverAddress] = useState(account?.address || "");
 
   async function getTokenList() {
     try {
@@ -48,8 +50,8 @@ function SellModal({ closeModal, onConfirmClick, loading = false }) {
       price_per_token: stringToNumber(pricePerToken), // remove commas before converting to number
       chain_id: account?.chainId,
       trade_type: 0,
+      receiver_wallet_address: receiverAddress || account?.address,
       lot_size: selectedLotSize?.value,
-      receiver_wallet_address: account?.address,
       receive_token: selectedColateralToken?.token_address,
       receive_token_symbol: selectedColateralToken?.symbol,
       receive_token_name: selectedColateralToken?.name,
@@ -125,6 +127,20 @@ function SellModal({ closeModal, onConfirmClick, loading = false }) {
               Investment Info
             </p>
             <div className="bg-gray100 dark:bg-gray100Dark border border-gray200 dark:border-gray200Dark rounded-[14px] p-[10px] md:p-[14px] mt-[10px] flex flex-col gap-y-4">
+              <div className="flex flex-col">
+                <p className="text-sm font-medium mb-[5px] text-gray500 dark:text-gray500Dark">
+                  Receiver Address (Optional - ENS Supported)
+                </p>
+                <EnsInput
+                  value={receiverAddress}
+                  onChange={setReceiverAddress}
+                  placeholder="vitalik.eth or 0x..."
+                  disabled={loading}
+                />
+                <p className="text-xs text-gray500 dark:text-gray500Dark mt-1">
+                  Leave empty to use your connected wallet
+                </p>
+              </div>
               <div className="flex gap-x-[10px]">
                 <div className="flex flex-col flex-1">
                   <p className="text-sm font-medium mb-[5px] text-gray500 dark:text-gray500Dark">

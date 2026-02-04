@@ -1,6 +1,7 @@
 import React from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { WalletDark, DropdownArrow } from "../../assets/icons";
+import { useEnsProfile } from "../../hooks/useEns";
 
 function ConnectWalletButton({ fullVariant = false }) {
   return (
@@ -58,19 +59,41 @@ function ConnectWalletButton({ fullVariant = false }) {
               }
 
               return (
-                <button
-                  className="flex items-center gap-x-[10px] py-2 px-5 bg-brand-gradient rounded-full text-sm tracking-tight font-medium text-baseWhiteDark"
-                  onClick={openAccountModal}
-                >
-                  <p className="whitespace-nowrap">{account.displayName}</p>
-                  <DropdownArrow stroke={"stroke-baseWhiteDark"} />
-                </button>
+                <ConnectedButton 
+                  account={account} 
+                  openAccountModal={openAccountModal} 
+                />
               );
             })()}
           </div>
         );
       }}
     </ConnectButton.Custom>
+  );
+}
+
+// Separate component to use hooks
+function ConnectedButton({ account, openAccountModal }) {
+  const { ensName, avatar } = useEnsProfile(account.address);
+  
+  const displayName = ensName || account.displayName;
+  
+  return (
+    <button
+      className="flex items-center gap-x-[10px] py-2 px-5 bg-brand-gradient rounded-full text-sm tracking-tight font-medium text-baseWhiteDark"
+      onClick={openAccountModal}
+    >
+      {avatar && (
+        <img 
+          src={avatar} 
+          alt="ENS Avatar" 
+          className="w-5 h-5 rounded-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
+      )}
+      <p className="whitespace-nowrap">{displayName}</p>
+      <DropdownArrow stroke={"stroke-baseWhiteDark"} />
+    </button>
   );
 }
 

@@ -4,6 +4,7 @@ import { ShuffleIcon } from "../../assets/icons";
 import LavaLogo from "../../assets/images/LavaLogo.png";
 import CircularProgress from "../common/CircularProgress";
 import { formatStringToNumber } from "../../utils";
+import EnsDisplay from "../common/EnsDisplay";
 
 function DealGridView({
   total_token,
@@ -17,6 +18,7 @@ function DealGridView({
   end_date,
   tge,
   isBuy,
+  receiver_wallet_address,
   onButtonClick = () => {},
 }) {
   function convertTime(timestamp) {
@@ -76,7 +78,17 @@ function DealGridView({
         </div>
       </div>
       <div className="flex items-center justify-between pt-[10px] mt-[10px] border-t border-gray300 dark:border-gray300Dark">
-        <CircularProgress percentage={completion_percentage} />
+        <div className="flex items-center gap-x-2">
+          <CircularProgress percentage={completion_percentage} />
+          {receiver_wallet_address && (
+            <EnsDisplay 
+              address={receiver_wallet_address}
+              showAvatar={true}
+              avatarClassName="w-5 h-5"
+              className="text-xs"
+            />
+          )}
+        </div>
         <div className="flex items-center gap-x-[6px]">
           {/* <p className="text-sm font-medium text-gray500 dark:text-gray500Dark font-openmarket-general-sans flex items-center gap-x-[6px]">
             <span className="block w-4 h-4">

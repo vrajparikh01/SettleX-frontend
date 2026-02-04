@@ -5,6 +5,7 @@ import CircularProgress from "./common/CircularProgress";
 import { EyeGrayIcon, ShuffleIcon } from "../assets/icons";
 import { formatStringToNumber } from "../utils";
 import LavaLogo from "../assets/images/LavaLogo.png";
+import EnsDisplay from "./common/EnsDisplay";
 
 function OtcList({
   _id = "",
@@ -41,7 +42,7 @@ function OtcList({
   return (
     <div
       className={`grid items-center w-full bg-baseWhite dark:bg-black border border-gray300 dark:border-gray300Dark font-openmarket-general-sans rounded-[20px] py-[14px] px-[14px] cursor-pointer ${
-        showBuySell ? "grid-cols-6" : "grid-cols-7"
+        showBuySell ? "grid-cols-7" : "grid-cols-8"
       }`}
       onClick={handleGridClick}
     >
@@ -67,6 +68,17 @@ function OtcList({
         <p className="flex items-center text-xs font-medium text-gray500 dark:text-gray500Dark gap-x-1">
           <ShuffleIcon /> {receive_token?.symbol}
         </p>
+      </div>
+      <div className="col-span-2">
+        {receiver_wallet_address && (
+          <EnsDisplay 
+            address={receiver_wallet_address}
+            showAvatar={true}
+            showAddress={false}
+            avatarClassName="w-6 h-6"
+            className="text-sm"
+          />
+        )}
       </div>
       <p className="text-sm font-medium flex gap-x-[6px] items-center text-gray500 dark:text-gray500Dark">
         <EyeGrayIcon /> {view_count}
