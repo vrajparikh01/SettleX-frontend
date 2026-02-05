@@ -82,7 +82,8 @@ import { useEffect } from "react";
 import Admin from "./pages/admin";
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
-import Equity from "./pages/equity";
+// import Equity from "./pages/equity"; // Commented for Li.Fi integration
+import Swap from "./pages/swap"; // Li.Fi Swap & Bridge page
 
 function App() {
   const config = getDefaultConfig({
@@ -216,11 +217,19 @@ function App() {
       // errorElement: <ErrorPage />,
       children: [{ index: true, element: <Admin /> }],
     },
+    // Equity route commented out for Li.Fi integration
+    // {
+    //   path: "/equity",
+    //   element: <Layout />,
+    //   children: [{ index: true, element: <Equity /> }],
+    // },
     {
-      path: "/equity",
+      path: "/swap/*", // Wildcard required for Li.Fi widget internal routing
       element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <Equity /> }],
+      children: [
+        { index: true, element: <Swap /> },
+        { path: "*", element: <Swap /> }, // Render Swap component on all sub-routes
+      ],
     },
     {
       path: "/settings",

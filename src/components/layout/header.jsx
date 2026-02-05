@@ -115,7 +115,8 @@ function Header() {
               <BrokerIcon isActive={location?.pathname.includes("/broker")} />
               Broker
             </NavLink>
-            <NavLink
+            {/* Equity NavLink commented out for Li.Fi integration */}
+            {/* <NavLink
               to={"/equity"}
               className={({ isActive }) =>
                 isActive
@@ -127,6 +128,21 @@ function Header() {
                 <Portfolio isActive={location?.pathname == "/equity"} />
               </span>
               Equity
+            </NavLink> */}
+            <NavLink
+              to={"/swap"}
+              className={({ isActive }) =>
+                isActive
+                  ? "text-baseWhiteDark dark:text-baseWhite font-semibold flex items-center gap-x-2 px-3 py-[6px]"
+                  : "flex items-center gap-x-2 px-3 py-[6px]"
+              }
+            >
+              <span>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+              </span>
+              Swap
             </NavLink>
             <NavLink
               to={"/dashboard"}
@@ -209,9 +225,10 @@ function Header() {
                 />
                 Broker
               </NavLink>
-              <NavLink
+              {/* Equity NavLink commented out for Li.Fi integration */}
+              {/* <NavLink
                 to={"/equity"}
-                className={({ isActive }) =>
+                className={({ isActive}) =>
                   isActive
                     ? "text-baseWhiteDark font-semibold flex items-center py-4 bg-brand-gradient rounded-[14px] gap-x-2 justify-center"
                     : "flex items-center justify-center gap-x-2 py-4 font-medium text-baseWhiteDark dark:text-baseWhite"
@@ -224,6 +241,22 @@ function Header() {
                   />
                 </span>
                 Equity
+              </NavLink> */}
+              <NavLink
+                to={"/swap"}
+                className={({ isActive }) =>
+                  isActive
+                    ? "text-baseWhiteDark font-semibold flex items-center py-4 bg-brand-gradient rounded-[14px] gap-x-2 justify-center"
+                    : "flex items-center justify-center gap-x-2 py-4 font-medium text-baseWhiteDark dark:text-baseWhite"
+                }
+                onClick={handleHamburgerClick}
+              >
+                <span>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </span>
+                Swap
               </NavLink>
               <NavLink
                 to={"/dashboard"}
