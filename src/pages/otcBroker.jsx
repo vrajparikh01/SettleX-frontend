@@ -420,7 +420,7 @@ function OtcBroker() {
     <div className="px-5 py-4 md:px-8">
       <div className="px-[10px] py-[10px] md:px-5 md:py-3 border bg-gray100 dark:bg-gray100Dark border-gray200 dark:border-gray200Dark rounded-[14px]">
         <p className="text-2xl md:text-[28px] md:leading-9 font-semibold text-baseWhiteDark dark:text-baseWhite">
-          Find your ideal offer via OpenMarket Global Crypto Brokers
+          Find your ideal offer via SettleX Global Crypto Brokers
         </p>
         <p className="md-[10px] md:mt-[6px] text-base font-medium text-gray500 dark:text-gray500Dark">
           Our brokers platform only offering large ticket size deals

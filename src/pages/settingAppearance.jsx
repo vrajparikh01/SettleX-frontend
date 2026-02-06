@@ -33,7 +33,7 @@ function SettingAppearance() {
               Theme
             </p>
             <p className="font-medium text-sm text-gray500 dark:text-gray500Dark mt-1">
-              Adjust the visual appearance of OpenMarket Web Application as per
+              Adjust the visual appearance of SettleX Web Application as per
               your convenience.{" "}
             </p>
           </div>

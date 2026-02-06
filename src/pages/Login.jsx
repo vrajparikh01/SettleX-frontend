@@ -14,7 +14,7 @@ const Login = () => {
           <div className="p-0 md:p-12 h-full w-full flex flex-col items-start justify-center md:justify-between">
             <img
               src={OpenmarketFullLogo}
-              alt="Open Market"
+              alt="SettleX"
               className="hidden md:block"
             />
             <div className="flex flex-col self-start w-full text-white ">
@@ -57,11 +57,11 @@ const Login = () => {
       </div>
       <div className="bg-center bg-no-repeat bg-cover bg-dot-bg bg-baseWhite dark:bg-black flex flex-col justify-between items-center mt-[60px] md:mt-0 py-9 md:py-16 h-1/2 md:h-full w-full flex-1">
         <div className="block md:hidden fixed w-screen top-0 left-0 bg-baseWhite dark:bg-black py-4 px-5 border-b border-gray400 dark:border-gray400Dark">
-          <img src={OpenmarketFullLogo} alt="Open Market" className="w-1/2" />
+          <img src={OpenmarketFullLogo} alt="SettleX" className="w-1/2" />
         </div>
         <img
           src={SideImage}
-          alt="Open Market"
+          alt="SettleX"
           className="object-contain w-full h-full md:h-authMedia"
         />
       </div>
