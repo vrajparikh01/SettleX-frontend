@@ -11,7 +11,7 @@ import Premarket from "./pages/premarket";
 import Settings from "./pages/settings";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider, http } from "wagmi";
-import { sepolia, polygon, mainnet } from "wagmi/chains";
+import { sepolia, polygon, mainnet, base } from "wagmi/chains";
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -89,7 +89,7 @@ function App() {
   const config = getDefaultConfig({
     appName: "RainbowKit demo",
     projectId: "YOUR_PROJECT_ID",
-    chains: import.meta.env.VITE_ENV === "production" ? [polygon, mainnet] : [sepolia, mainnet],
+    chains: [mainnet, polygon, base],
     wallets: [
       {
         groupName: "Recommended",
@@ -156,16 +156,11 @@ function App() {
         ],
       },
     ],
-    transports:
-      import.meta.env.VITE_ENV === "production"
-        ? {
-            [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL),
-            [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://ethereum.publicnode.com'),
-          }
-        : {
-            [sepolia.id]: http(import.meta.env.VITE_RPC_URL),
-            [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://ethereum.publicnode.com'),
-          },
+    transports: {
+      [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://ethereum.publicnode.com'),
+      [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL || 'https://polygon-rpc.com'),
+      [base.id]: http(import.meta.env.VITE_BASE_RPC_URL || 'https://mainnet.base.org'),
+    },
   });
 
   const queryClient = new QueryClient();

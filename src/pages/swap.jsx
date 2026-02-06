@@ -35,26 +35,38 @@ export default function Swap() {
       'language',   // Hide language settings (optional)
     ],
     
-    // For TESTING on Sepolia testnet
-    fromChain: mode === 'swap' ? 11155111 : undefined, // Sepolia for testing
-    toChain: mode === 'swap' ? 11155111 : undefined,   // Same chain = swap on Sepolia
-    
-    // Supported chains (Sepolia, Polygon, Ethereum)
+    // Supported chains (Ethereum, Polygon, Base Mainnet)
     chains: {
-      allow: [11155111, 137, 1], // Sepolia testnet, Polygon Mainnet, Ethereum Mainnet
+      allow: [1, 137, 8453], // Ethereum Mainnet, Polygon Mainnet, Base Mainnet
     },
 
-    // Featured tokens for Sepolia
+    // Allowed tokens: DAI, USDC, USDT, ETH, POL, SHIB, BNB, LINK
     tokens: {
-      featured: [
-        {
-          address: '0x0000000000000000000000000000000000000000', // Native ETH on Sepolia
-          symbol: 'ETH',
-          decimals: 18,
-          chainId: 11155111,
-          name: 'Sepolia Ether',
-          logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/info/logo.png',
-        },
+      allow: [
+        // Ethereum Mainnet (chainId: 1)
+        { address: '0x0000000000000000000000000000000000000000', symbol: 'ETH', chainId: 1 }, // Native ETH
+        { address: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI', chainId: 1 },
+        { address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', symbol: 'USDC', chainId: 1 },
+        { address: '0xdAC17F958D2ee523a2206206994597C13D831ec7', symbol: 'USDT', chainId: 1 },
+        { address: '0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE', symbol: 'SHIB', chainId: 1 },
+        { address: '0x514910771AF9Ca656af840dff83E8264EcF986CA', symbol: 'LINK', chainId: 1 },
+        
+        // Polygon Mainnet (chainId: 137)
+        { address: '0x0000000000000000000000000000000000001010', symbol: 'POL', chainId: 137 }, // Native POL
+        { address: '0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063', symbol: 'DAI', chainId: 137 },
+        { address: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359', symbol: 'USDC', chainId: 137 },
+        { address: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', symbol: 'USDT', chainId: 137 },
+        { address: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', symbol: 'ETH', chainId: 137 }, // Wrapped ETH
+        { address: '0x6f8a06447Ff6FcF75d803135a7de15CE88C1d4ec', symbol: 'SHIB', chainId: 137 },
+        { address: '0x53E0bca35eC356BD5ddDFebbD1Fc0fD03FaBad39', symbol: 'LINK', chainId: 137 },
+        
+        // Base Mainnet (chainId: 8453)
+        { address: '0x0000000000000000000000000000000000000000', symbol: 'ETH', chainId: 8453 }, // Native ETH
+        { address: '0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb', symbol: 'DAI', chainId: 8453 },
+        { address: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913', symbol: 'USDC', chainId: 8453 },
+        { address: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2', symbol: 'USDT', chainId: 8453 },
+        { address: '0x4ed4E862860beD51a9570b96d89aF5E1B0Efefed', symbol: 'SHIB', chainId: 8453 },
+        { address: '0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196', symbol: 'LINK', chainId: 8453 },
       ],
     },
 
