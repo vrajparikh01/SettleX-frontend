@@ -85,170 +85,155 @@ import { ToastContainer } from "react-toastify";
 // import Equity from "./pages/equity"; // Commented for Li.Fi integration
 import Swap from "./pages/swap"; // Li.Fi Swap & Bridge page
 
-function App() {
-  const config = getDefaultConfig({
-    appName: "RainbowKit demo",
-    projectId: "YOUR_PROJECT_ID",
-    chains: [mainnet, polygon, base],
-    wallets: [
+// ─── Created OUTSIDE the component so they are never recreated on re-render ───
+// Recreating wagmi config on every render causes repeated RPC calls to every chain.
+
+const config = getDefaultConfig({
+  appName: "RainbowKit demo",
+  projectId: "YOUR_PROJECT_ID",
+  chains: [mainnet, polygon, base],
+  wallets: [
+    {
+      groupName: "Recommended",
+      wallets: [
+        argentWallet,
+        bifrostWallet,
+        binanceWallet,
+        bitgetWallet,
+        bitskiWallet,
+        bitverseWallet,
+        bloomWallet,
+        braveWallet,
+        bybitWallet,
+        clvWallet,
+        coin98Wallet,
+        coinbaseWallet,
+        compassWallet,
+        coreWallet,
+        dawnWallet,
+        desigWallet,
+        enkryptWallet,
+        foxWallet,
+        frameWallet,
+        frontierWallet,
+        gateWallet,
+        imTokenWallet,
+        injectedWallet,
+        iopayWallet,
+        kaiaWallet,
+        kaikasWallet,
+        krakenWallet,
+        kresusWallet,
+        ledgerWallet,
+        magicEdenWallet,
+        metaMaskWallet,
+        mewWallet,
+        nestWallet,
+        oktoWallet,
+        okxWallet,
+        omniWallet,
+        oneInchWallet,
+        oneKeyWallet,
+        phantomWallet,
+        rabbyWallet,
+        rainbowWallet,
+        ramperWallet,
+        roninWallet,
+        safeWallet,
+        safeheronWallet,
+        safepalWallet,
+        seifWallet,
+        subWallet,
+        tahoWallet,
+        talismanWallet,
+        tokenaryWallet,
+        tokenPocketWallet,
+        trustWallet,
+        uniswapWallet,
+        valoraWallet,
+        walletConnectWallet,
+        xdefiWallet,
+        zealWallet,
+        zerionWallet,
+      ],
+    },
+  ],
+  transports: {
+    [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://eth.llamarpc.com'),
+    [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL || 'https://polygon.llamarpc.com'),
+    [base.id]: http(import.meta.env.VITE_BASE_RPC_URL || 'https://base.llamarpc.com'),
+  },
+  // Reduce block polling from default 4s to 30s — prevents RPC call storms
+  pollingInterval: 30_000,
+});
+
+const queryClient = new QueryClient();
+
+const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/",
+    element: <Layout />,
+    children: [{ index: true, element: <Premarket /> }],
+  },
+  {
+    path: "/otc",
+    element: <Layout />,
+    children: [
+      { index: true, element: <Otc /> },
+      { path: "details", element: <OtcDetails /> },
+    ],
+  },
+  {
+    path: "/broker",
+    element: <Layout />,
+    children: [{ index: true, element: <OtcBroker /> }],
+  },
+  {
+    path: "/deal-approval",
+    element: <Layout />,
+    children: [{ index: true, element: <DealApproval /> }],
+  },
+  {
+    path: "/dashboard",
+    element: <Layout />,
+    children: [{ index: true, element: <Dashboard /> }],
+  },
+  {
+    path: "/admin",
+    element: <Layout />,
+    children: [{ index: true, element: <Admin /> }],
+  },
+  {
+    path: "/swap/*",
+    element: <Layout />,
+    children: [
+      { index: true, element: <Swap /> },
+      { path: "*", element: <Swap /> },
+    ],
+  },
+  {
+    path: "/settings",
+    element: <Layout />,
+    children: [
       {
-        groupName: "Recommended",
-        wallets: [
-          argentWallet,
-          bifrostWallet,
-          binanceWallet,
-          bitgetWallet,
-          bitskiWallet,
-          bitverseWallet,
-          bloomWallet,
-          braveWallet,
-          bybitWallet,
-          clvWallet,
-          coin98Wallet,
-          coinbaseWallet,
-          compassWallet,
-          coreWallet,
-          dawnWallet,
-          desigWallet,
-          enkryptWallet,
-          foxWallet,
-          frameWallet,
-          frontierWallet,
-          gateWallet,
-          imTokenWallet,
-          injectedWallet,
-          iopayWallet,
-          kaiaWallet,
-          kaikasWallet,
-          krakenWallet,
-          kresusWallet,
-          ledgerWallet,
-          magicEdenWallet,
-          metaMaskWallet,
-          mewWallet,
-          nestWallet,
-          oktoWallet,
-          okxWallet,
-          omniWallet,
-          oneInchWallet,
-          oneKeyWallet,
-          phantomWallet,
-          rabbyWallet,
-          rainbowWallet,
-          ramperWallet,
-          roninWallet,
-          safeWallet,
-          safeheronWallet,
-          safepalWallet,
-          seifWallet,
-          subWallet,
-          tahoWallet,
-          talismanWallet,
-          tokenaryWallet,
-          tokenPocketWallet,
-          trustWallet,
-          uniswapWallet,
-          valoraWallet,
-          walletConnectWallet,
-          xdefiWallet,
-          zealWallet,
-          zerionWallet,
+        element: <SettingsLayout />,
+        children: [
+          { index: true, element: <></> },
+          { path: "profile", element: <Settings /> },
+          { path: "appearance", element: <SettingAppearance /> },
         ],
       },
     ],
-    transports: {
-      [mainnet.id]: http(import.meta.env.VITE_MAINNET_RPC_URL || 'https://ethereum.publicnode.com'),
-      [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL || 'https://polygon-rpc.com'),
-      [base.id]: http(import.meta.env.VITE_BASE_RPC_URL || 'https://mainnet.base.org'),
-    },
-  });
+  },
+]);
 
-  const queryClient = new QueryClient();
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const router = createBrowserRouter([
-    {
-      path: "/login",
-      element: <Login />,
-    },
-    {
-      path: "/",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <Premarket /> }],
-    },
-    {
-      path: "/otc",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [
-        { index: true, element: <Otc /> },
-        {
-          path: "details",
-          element: <OtcDetails />,
-        },
-      ],
-    },
-    {
-      path: "/broker",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <OtcBroker /> }],
-    },
-    {
-      path: "/deal-approval",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <DealApproval /> }],
-    },
-    {
-      path: "/dashboard",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <Dashboard /> }],
-    },
-    {
-      path: "/admin",
-      element: <Layout />,
-      // errorElement: <ErrorPage />,
-      children: [{ index: true, element: <Admin /> }],
-    },
-    // Equity route commented out for Li.Fi integration
-    // {
-    //   path: "/equity",
-    //   element: <Layout />,
-    //   children: [{ index: true, element: <Equity /> }],
-    // },
-    {
-      path: "/swap/*", // Wildcard required for Li.Fi widget internal routing
-      element: <Layout />,
-      children: [
-        { index: true, element: <Swap /> },
-        { path: "*", element: <Swap /> }, // Render Swap component on all sub-routes
-      ],
-    },
-    {
-      path: "/settings",
-      element: <Layout />,
-      // errorElement: <ErrorPage />, // Uncomment if you have an ErrorPage component
-      children: [
-        {
-          element: <SettingsLayout />,
-          children: [
-            { index: true, element: <></> },
-            { path: "profile", element: <Settings /> },
-            // {
-            //   path: "wallet",
-            //   element: <SettingWallet />,
-            // },
-            {
-              path: "appearance",
-              element: <SettingAppearance />,
-            },
-          ],
-        },
-      ],
-    },
-  ]);
+function App() {
 
   useEffect(() => {
     if (

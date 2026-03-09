@@ -67,8 +67,7 @@ function AddTokenModal({
       .then((res) => {
         setTokenAddress({
           ...tokenAddress,
-          logo:
-            import.meta.env.VITE_BASE_URL.replace("/v1", "") + res?.data?.data,
+          logo: res?.data?.data,
         });
         setImg((prev) => ({
           ...prev,

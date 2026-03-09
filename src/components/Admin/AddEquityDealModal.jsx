@@ -42,7 +42,7 @@ function AddEquityDealModal({ closeModal, onConfirmClick, loading = false }) {
         setTokenAddress({
           ...tokenAddress,
           logo:
-            import.meta.env.VITE_BASE_URL.replace("/v1", "") + res?.data?.data,
+            res?.data?.data,
         });
         setImg((prev) => ({
           ...prev,
