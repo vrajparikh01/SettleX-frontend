@@ -1,37 +1,41 @@
-import { sepolia, polygon } from "wagmi/chains";
+import { sepolia, polygon, base } from "wagmi/chains";
 import { createConfig, http } from "@wagmi/core";
 
-export const otc_contract = (chainId) => {
-  if (chainId === 11155111) {
-    return "0x7BD0579b0F43CA1de80B71DBC9413a794D196Bb7"; //Sepolia
-  } else if (chainId === 137) {
-    return "0xCbB24e844ce78D774AbF2dcBAb90C6c921F5CD0d"; //Polygon
-  }
+const CONTRACTS = {
+  otc: {
+    11155111: import.meta.env.VITE_OTC_CONTRACT_SEPOLIA, // Sepolia
+    137:      import.meta.env.VITE_OTC_CONTRACT_POLYGON,  // Polygon
+    8453:     import.meta.env.VITE_OTC_CONTRACT_BASE,     // Base
+  },
+  premarket: {
+    11155111: import.meta.env.VITE_PREMARKET_CONTRACT_SEPOLIA, // Sepolia
+    137:      import.meta.env.VITE_PREMARKET_CONTRACT_POLYGON,  // Polygon
+    8453:     import.meta.env.VITE_PREMARKET_CONTRACT_BASE,     // Base
+  },
 };
-export const premarket_contract = (chainId) => {
-  if (chainId === 11155111) {
-    return "0x13EB77f7bec26f2B4A2db1f28835A3f0eb1d2C8d"; //Sepolia
-  } else if (chainId === 137) {
-    return "0x6a362735848873Bac7323c17652015cb9Cc8d5A4"; //Polygon
-  }
-};
+
+export const otc_contract = (chainId) => CONTRACTS.otc[chainId];
+export const premarket_contract = (chainId) => CONTRACTS.premarket[chainId];
 
 export const getTransactionUrl = (chainId) => {
   if (chainId === 11155111) {
-    return "https://sepolia.etherscan.io/tx/"; //Sepolia
+    return "https://sepolia.etherscan.io/tx/"; // Sepolia
   } else if (chainId === 137) {
-    return "https://polygonscan.com/tx/"; //Polygon
+    return "https://polygonscan.com/tx/";       // Polygon
+  } else if (chainId === 8453) {
+    return "https://basescan.org/tx/";          // Base
   }
 };
 
 export const config = createConfig({
   appName: "OTC App",
   projectId: "OTC_PROJECT_ID",
-  chains: import.meta.env.VITE_ENV === "production" ? [polygon] : [sepolia],
+  chains: import.meta.env.VITE_ENV === "production" ? [polygon, base] : [sepolia],
   transports:
     import.meta.env.VITE_ENV === "production"
       ? {
           [polygon.id]: http(import.meta.env.VITE_POLYGON_RPC_URL),
+          [base.id]:    http(import.meta.env.VITE_BASE_RPC_URL),
         }
       : {
           [sepolia.id]: http(import.meta.env.VITE_RPC_URL),
