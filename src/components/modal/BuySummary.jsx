@@ -7,6 +7,7 @@ import CustomSlider from "../common/CustomSlider";
 import { useAccount } from "wagmi";
 import ConnectWalletButton from "../common/ConnectWalletButton";
 import Loading from "../../assets/icons/loading";
+import EnsTraderCard from "../common/EnsTraderCard";
 
 function BuySummary({
   available_token,
@@ -25,6 +26,7 @@ function BuySummary({
   start_date,
   end_date,
   tge,
+  receiver_wallet_address,
 }) {
   const account = useAccount();
   const [value, setValue] = useState(100); // Default value for the slider
@@ -139,9 +141,17 @@ function BuySummary({
             )}
           </div>
           <div className="p-5 bg-gray100 dark:bg-gray100Dark rounded-2xl flex-[4]">
-            <p className="mb-5 text-lg font-semibold md:mb-6 text-baseWhiteDark dark:text-baseWhite">
+            <p className="mb-4 text-lg font-semibold text-baseWhiteDark dark:text-baseWhite">
               Offer details
             </p>
+            {receiver_wallet_address && (
+              <div className="mb-5 pb-5 border-b border-gray300 dark:border-gray300Dark">
+                <p className="text-xs font-medium text-gray500 dark:text-gray500Dark mb-2">
+                  Seller
+                </p>
+                <EnsTraderCard address={receiver_wallet_address} label="Seller" />
+              </div>
+            )}
             <div className="flex flex-col gap-y-5 md:gap-y-[22px]">
               <div className="flex items-center justify-between text-sm">
                 <p className="font-medium text-gray500 dark:text-gray500Dark">

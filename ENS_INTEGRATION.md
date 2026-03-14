@@ -1,390 +1,226 @@
-# 🎭 ENS Integration - SettleX Platform
-## Complete Implementation Guide for Judges & Partners
+# ENS Integration — SettleX
+
+> **"Best Creative Use of ENS"** — ETHGlobal Hackathon Submission
+>
+> SettleX uses ENS not just as a name resolver, but as a decentralized identity, reputation, and preferences layer for peer-to-peer OTC trading.
 
 ---
 
-## 📋 Table of Contents
-1. [Executive Summary](#executive-summary)
-2. [What is ENS?](#what-is-ens)
-3. [Why ENS for SettleX?](#why-ens-for-settlex)
-4. [Technical Implementation](#technical-implementation)
-5. [User Experience](#user-experience)
-6. [Bounty Qualification](#bounty-qualification)
-7. [Testing Guide](#testing-guide)
+## Overview
+
+SettleX is an OTC + Premarket trading platform where users trade directly with each other. The core problem: **who am I trading with?** ENS solves this by turning every trader's `.eth` name into a full on-chain identity — avatar, social links, trust score, and custom trading preferences — with zero backend, zero sign-up, and zero centralized storage.
 
 ---
 
-## 🎯 Executive Summary
+## What We Built Beyond Name Resolution
 
-**SettleX** has integrated **Ethereum Name Service (ENS)** to transform trading from addresses to identities. Instead of seeing `0xA1B2C3D4E5F6...`, users now see human-readable names like `alice.eth` with profile pictures throughout the entire platform.
-
-### Quick Stats
-- **Custom Code**: 4 React components + 1 hooks file (~1,500 lines)
-- **Integration Points**: 10+ components updated
-- **Features**: Name resolution, avatars, social profiles, input validation
-- **Performance**: 1-hour caching, <500ms cached lookups
-- **Networks**: Works on Polygon/Sepolia while resolving from Ethereum Mainnet
-
----
-
-## 🔍 What is ENS?
-
-ENS (Ethereum Name Service) is the blockchain's equivalent of DNS for the internet.
-
-### Traditional Web3 Problem:
-```
-Wallet Address: 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
-❌ Hard to remember
-❌ Easy to mistype
-❌ No identity information
-❌ No way to verify who you're sending to
-```
-
-### With ENS:
-```
-ENS Name: vitalik.eth
-✅ Easy to remember
-✅ Impossible to mistype
-✅ Shows profile picture (avatar)
-✅ Includes social media (Twitter, GitHub)
-✅ Verified on blockchain
-```
+| Feature | Description | ENS Mechanism |
+|---|---|---|
+| **`settlex.prefs`** | Custom ENS text record stores OTC trading preferences as JSON on Ethereum | `getEnsText(client, { key: "settlex.prefs" })` |
+| **Trust Score** | 0–100 score computed from on-chain profile completeness | Multiple text record keys combined |
+| **Counterparty Preview** | Type `alice.eth` → see her full profile + preferences inline before submitting | ENS name → address → text records |
+| **Verified Checkmark** | Forward + reverse resolution both checked — anti-spoofing | `useEnsName` + `useEnsAddress` cross-check |
+| **Veteran Badge** | ENS registration age from The Graph subgraph | ENS subgraph GraphQL query |
+| **NFT Avatar Badge** | Detects `eip155:1/erc721:...` avatar records (BAYC, CryptoPunks, etc.) | Raw `avatar` text record parsing |
+| **Farcaster + Lens** | Social profile links pulled from ENS text records | `xyz.farcaster`, `xyz.lens` keys |
+| **ENS-Only Filter** | Marketplace filter showing only traders with ENS names | Live resolution per trade card |
+| **ENS Name Search** | Search the marketplace by ENS name (e.g. `alice.eth`) | `useEnsAddress` for resolution |
+| **Preference Matching** | Highlights trades matching the logged-in user's `settlex.prefs` | Cross-reference two ENS records |
+| **Dual Trade Route** | Shows `creator.eth → receiver.eth` on every trade card | Two `EnsDisplay` components per card |
+| **On-chain Stats** | Deal history (trades created, fills, volume) pulled from platform APIs | ENS-resolved address as API key |
 
 ---
 
-## 💡 Why ENS for SettleX?
+## The Key Innovation: `settlex.prefs`
 
-### Problem Statement
-SettleX is an **OTC (Over-The-Counter) trading platform** where users:
-- Create trading offers
-- Buy/sell tokens peer-to-peer
-- Transfer assets to specific addresses
+Any ENS holder can set a custom text record on [app.ens.domains](https://app.ens.domains):
 
-**Pain Points Without ENS:**
-1. Users must copy/paste long 0x addresses (error-prone)
-2. No way to verify trader identity before trade
-3. Addresses look the same, hard to distinguish traders
-4. No social proof or reputation visible
-5. Poor user experience compared to Web2
+```
+Key:   settlex.prefs
+Value: {"tokens":["USDC","WETH"],"min":"1000","max":"50000","note":"Large deals only"}
+```
 
-### Our Solution
-ENS transforms SettleX into a **human-centric trading platform**:
+This stores their OTC trading preferences **directly on Ethereum** — no backend, no account, no sign-up. SettleX reads this record and:
 
-✅ **Trust**: See trader names + avatars before committing  
-✅ **Safety**: Reduced risk of sending to wrong address  
-✅ **Identity**: Social profiles (Twitter, GitHub) build reputation  
-✅ **UX**: "Send to alice.eth" instead of "0x1234..."  
-✅ **Professionalism**: Looks like a real product, not just addresses  
+1. Shows the counterparty's preferences **while you are typing their ENS name** in the deal creation form
+2. Highlights marketplace trades that match **your own** `settlex.prefs` preferences
+3. Adds **+5 points** to the trust score for verified SettleX traders
+
+The `settlex.prefs` key is an open standard — any other DeFi protocol can adopt it. Trader sovereignty: they own their preferences on-chain.
 
 ---
 
-## 🏗️ Technical Implementation
+## ENS Trust Score
 
-### Architecture Overview
+Computed purely from on-chain ENS data — no centralized database:
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 SettleX Frontend                    │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  ┌──────────────┐      ┌──────────────┐           │
-│  │  Polygon/    │      │  Ethereum    │           │
-│  │  Sepolia     │      │  Mainnet     │           │
-│  │  (Trading)   │◄────►│  (ENS)       │           │
-│  └──────────────┘      └──────────────┘           │
-│        │                      │                     │
-│        ▼                      ▼                     │
-│  ┌─────────────────────────────────────┐           │
-│  │      Wagmi (Wallet Provider)        │           │
-│  └─────────────────────────────────────┘           │
-│        │                                            │
-│        ▼                                            │
-│  ┌─────────────────────────────────────┐           │
-│  │     Custom ENS Hooks & Components    │           │
-│  │  - useEnsProfile()                  │           │
-│  │  - useEnsResolver()                 │           │
-│  │  - EnsDisplay                       │           │
-│  │  - EnsInput                         │           │
-│  │  - EnsSocialProfile                 │           │
-│  └─────────────────────────────────────┘           │
-│        │                                            │
-│        ▼                                            │
-│  ┌─────────────────────────────────────┐           │
-│  │      1-Hour LocalStorage Cache       │           │
-│  └─────────────────────────────────────┘           │
-└─────────────────────────────────────────────────────┘
+ENS name registered    → 30 pts  (owns an on-chain identity)
+ENS avatar set         → 20 pts  (cares about presence)
+Twitter record set     → 15 pts  (public social accountability)
+GitHub record set      → 15 pts  (developer credibility)
+Discord record set     → 10 pts  (community membership)
+Description set        →  5 pts  (took time to fill profile)
+settlex.prefs set      →  5 pts  (verified SettleX trader)
+──────────────────────────────────────────────────────
+Maximum                → 100 pts
 ```
 
-### Key Technical Decisions
+**Tiers:** Verified Trader (≥70, green) · Active Trader (≥40, blue) · Basic Profile (≥1, gray) · Anonymous (0, hidden)
 
-#### 1. **Cross-Chain Resolution**
-```javascript
-// Trading happens on Polygon/Sepolia
-// ENS resolution always queries Ethereum Mainnet (chainId: 1)
+Shown as a compact badge on every trade card and a full badge with tier label in confirm modals.
 
-const { ensName } = useEnsName({
-  address: '0x1234...',
-  chainId: 1  // Always Ethereum Mainnet for ENS
+---
+
+## Architecture
+
+```
+App Layer (React)
+  WagmiProvider
+    chains: [mainnet, polygon, base]
+    mainnet transport → ENS resolution (all ENS hooks use chainId: 1)
+    polygon/base transport → OTC smart contracts
+
+ENS Layer (src/hooks/useEns.js)
+  useEnsProfile(address)      → { ensName, avatar, isVerified }
+  useEnsResolver(ensName)     → { address }
+  useEnsTextRecords(ensName)  → { twitter, github, discord, telegram, email,
+                                  url, description, settlex_prefs,
+                                  farcaster, lens, avatar_raw }
+  useEnsReputationScore(addr) → { score, tier, prefs, isVerified, textRecords }
+  useEnsNameAge(ensName)      → { nameAge, isVeteran }
+  parseNftAvatar(rawAvatar)   → "BAYC" | "CryptoPunks" | null
+
+Component Layer
+  EnsDisplay         → name + avatar for any address, verified checkmark
+  EnsInput           → live ENS resolution in form fields
+  EnsSocialProfile   → social links (full card or compact icon row)
+  EnsReputationBadge → trust score pill or full badge with tier
+  EnsTraderCard      → full identity card (avatar, name, score, prefs, socials, stats)
+  EnsTraderStats     → on-chain deal history via platform APIs
+```
+
+---
+
+## Key Technical Decisions
+
+### 1. Direct wagmi v2 + viem v2 — No SDK Black Box
+
+All ENS hooks are built directly on `wagmi v2` and `viem v2`. No RainbowKit ENS helpers, no `@ensdomains/ensjs` for resolution. Full control over every query, caching strategy, and error handling.
+
+```js
+// Fetch 11 ENS text record keys in parallel — one failed key never blocks others
+const results = await Promise.allSettled(
+  keys.map((key) => getEnsText(publicClient, { name: normalizedName, key }))
+);
+```
+
+### 2. Anti-Spoofing Verification
+
+When showing a verified checkmark, we check that reverse resolution AND forward resolution both match. This prevents someone from setting a reverse record pointing to a name they no longer own.
+
+```js
+// useEnsProfile — forward + reverse must both match
+const isVerified =
+  !!resolvedName &&
+  !!forwardAddress &&
+  forwardAddress.toLowerCase() === address?.toLowerCase();
+```
+
+### 3. localStorage Caching
+
+- ENS profiles: 1-hour TTL
+- ENS text records: 1-hour TTL
+- ENS name age (from The Graph): 24-hour TTL
+
+Prevents redundant mainnet RPC calls on every render. wagmi's internal React Query deduplication further reduces duplicate network requests.
+
+### 4. Cross-Chain Design
+
+Trading contracts run on Polygon / Base. ENS resolution always queries Ethereum mainnet (`chainId: 1`). Both transports configured in the same wagmi `WagmiProvider` — no chain switching required.
+
+### 5. `query: { enabled }` Pattern
+
+All conditional ENS hooks use wagmi v2's correct pattern to prevent queries from firing when input is invalid:
+
+```js
+useEnsAddress({
+  name: ensName,
+  chainId: 1,
+  query: { enabled: isValid }, // wagmi v2 — not top-level enabled
 });
 ```
 
-**Why?** ENS data lives on Ethereum Mainnet. Users trade on Polygon but get ENS names from mainnet.
+---
 
-#### 2. **Performance Optimization**
-```javascript
-// Cache ENS data for 1 hour in localStorage
-const cacheKey = `ens_${address.toLowerCase()}`;
-const cached = localStorage.getItem(cacheKey);
+## Files
 
-if (cached) {
-  const { ensName, avatar, timestamp } = JSON.parse(cached);
-  if (Date.now() - timestamp < 3600000) {
-    return { ensName, avatar }; // Return cached
-  }
-}
-```
-
-**Why?** ENS queries are slow (~1-2 seconds). Caching improves UX dramatically.
-
-#### 3. **Wagmi Integration**
-```javascript
-import { useEnsName, useEnsAvatar, useEnsAddress } from 'wagmi';
-import { normalize } from 'viem/ens';
-
-// Get ENS name from address
-const { data: ensName } = useEnsName({
-  address: '0x...',
-  chainId: 1
-});
-
-// Get avatar
-const { data: avatar } = useEnsAvatar({
-  name: normalize('vitalik.eth'),
-  chainId: 1
-});
-
-// Resolve ENS to address
-const { data: address } = useEnsAddress({
-  name: normalize('vitalik.eth'),
-  chainId: 1
-});
-```
-
-**Why?** Wagmi provides battle-tested hooks with automatic caching and error handling.
+| File | Lines | Purpose |
+|---|---|---|
+| `src/hooks/useEns.js` | ~450 | All 6 ENS hooks + utilities |
+| `src/components/common/EnsDisplay.jsx` | ~110 | Name + avatar + verified checkmark |
+| `src/components/common/EnsInput.jsx` | ~190 | Live ENS resolution in form fields |
+| `src/components/common/EnsSocialProfile.jsx` | ~265 | Social links — full + compact |
+| `src/components/common/EnsReputationBadge.jsx` | ~85 | Trust score badge |
+| `src/components/common/EnsTraderCard.jsx` | ~237 | Full identity card |
+| `src/components/common/EnsTraderStats.jsx` | ~80 | On-chain trading stats |
+| `src/components/OtcGrid.jsx` | — | Trade cards with ENS identity + dual route display |
+| `src/components/OtcList.jsx` | — | Trade rows with ENS identity + dual route display |
+| `src/components/modal/BuyModal.jsx` | — | ENS input + counterparty profile preview |
+| `src/components/modal/SellModal.jsx` | — | Same |
+| `src/components/modal/BuySummary.jsx` | — | Full EnsTraderCard in confirm modal |
+| `src/components/modal/SellSummary.jsx` | — | Same |
+| `src/components/Premarket/DealGridView.jsx` | — | ENS display on premarket cards |
+| `src/pages/otc.jsx` | — | A3 ENS filter · A7 ENS search · A8 pref matching |
 
 ---
 
-## 📁 File Structure
+## ENS Text Record Keys Used
 
-
-```
-src/
-├── hooks/
-│   └── useEns.js (209 lines)
-│       ├── useEnsProfile()      - Get name + avatar
-│       ├── useEnsResolver()     - Resolve ENS → address
-│       ├── useEnsTextRecords()  - Get social profiles
-│       └── Utility functions    - Validation, formatting
-│
-└── components/common/
-    ├── EnsDisplay.jsx (94 lines)
-    ├── EnsInput.jsx (132 lines)
-    ├── EnsSocialProfile.jsx (176 lines)
-    └── ConnectWalletButton.jsx (updated)
-```
-
-
-```
-src/
-├── components/
-│   ├── OtcGrid.jsx
-│   ├── OtcList.jsx
-│   └── Premarket/DealGridView.jsx
-└── components/modal/
-    ├── BuyModal.jsx
-    └── SellModal.jsx
-```
+| Key | Standard | Used For |
+|---|---|---|
+| `com.twitter` | ENS standard | Social link, trust score |
+| `com.github` | ENS standard | Social link, trust score |
+| `com.discord` | ENS standard | Social link, trust score |
+| `org.telegram` | ENS standard | Social link |
+| `email` | ENS standard | Contact |
+| `url` | ENS standard | Website link |
+| `description` | ENS standard | Profile bio, trust score |
+| `avatar` | ENS standard | NFT avatar detection |
+| `xyz.farcaster` | Community | Farcaster social link |
+| `xyz.lens` | Community | Lens Protocol link |
+| **`settlex.prefs`** | **Custom** | **OTC trading preferences (our innovation)** |
 
 ---
 
-## 🎨 User Experience
+## Live Demo
 
-### 1. **Wallet Connection**
-
-**Before:**
-```
-┌────────────────────────┐
-│  0xA1B2...C3D4  ▼     │  ❌ Just an address
-└────────────────────────┘
-```
-
-**After:**
-```
-┌────────────────────────┐
-│  🎭 alice.eth  ▼      │  ✅ Name + Avatar
-└────────────────────────┘
-```
-
-### 2. **OTC Marketplace**
-
-**Before:**
-```
-┌─────────────────────────────┐
-│  USDC for Sale              │
-│  Seller: 0xA1B2...C3D4     │  ❌ No identity
-│  Price: 1000 USDC           │
-└─────────────────────────────┘
-```
-
-**After:**
-```
-┌─────────────────────────────┐
-│  USDC for Sale              │
-│  🎭 alice.eth               │  ✅ Clear identity
-│  🐦 @alice  🔗 alice.com   │  ✅ Social proof
-│  Price: 1000 USDC           │
-└─────────────────────────────┘
-```
-
-### 3. **Creating Trades**
-
-**Before:**
-```
-Receiver Address:
-┌──────────────────────────────────┐
-│ 0xd8dA6BF26964aF9D7eEd9e03E534  │  ❌ Easy to mistype
-└──────────────────────────────────┘
-```
-
-**After:**
-```
-Receiver Address:
-┌──────────────────────────────────┐
-│ vitalik.eth ✓                    │  ✅ Validated
-│ ↳ Resolves to: 0xd8dA...15D37   │  ✅ Shows address
-└──────────────────────────────────┘
-```
+| Step | Location | What to See |
+|---|---|---|
+| ENS name + avatar on cards | `/otc` → Grid view | Every trader card shows ENS identity |
+| Trust score badge | `/otc` → any card | `🛡 85` badge beside ENS name |
+| Social icons | `/otc` → any card | Tiny 🐦 🔗 💻 icons below name |
+| ENS-only filter | `/otc` → toolbar | "ENS only" button filters anonymous traders |
+| ENS name search | `/otc` → search bar | Type `vitalik.eth` → cards filter |
+| ENS input + resolve | Buy modal → Receiver field | Type `vitalik.eth` → spinner → ✓ green |
+| Counterparty preview | Buy modal → type ENS | Full profile appears below input |
+| Full trader card | Click Buy on any trade | Seller's ENS profile in confirm modal |
+| `settlex.prefs` panel | Confirm modal | Green panel showing token preferences |
+| On-chain stats | Confirm modal | "12 deals · 4 fills · ~$4.2K vol" |
 
 ---
 
-✅ **Integration**
-- Custom hooks written: `useEnsProfile`, `useEnsResolver`, `useEnsTextRecords`
-- Custom components: `EnsDisplay`, `EnsInput`, `EnsSocialProfile`
-- NOT just RainbowKit - we use Wagmi hooks directly
-- 10+ integration points across the platform
-- 1,500+ lines of custom ENS code
+## Dependencies
 
-1. **Social Profiles for Trader Reputation**
-   - Fetch Twitter, GitHub, Discord from ENS text records
-   - Display social badges on trader profiles
-   - Build trust before trading
+```json
+"wagmi": "^2.12.10"
+"viem": "^2.21.5"
+"@rainbow-me/rainbowkit": "^2.1.6"
+"@tanstack/react-query": "^5.55.4"
+```
 
-2. **ENS Input Validation**
-   - Real-time resolution in forms
-   - Visual feedback (spinner → checkmark)
-   - Prevents sending to wrong address
-
-3. **Cross-Chain ENS**
-   - Trading on Polygon
-   - ENS resolution from Ethereum Mainnet
-   - Seamless user experience
-
-4. **Smart Caching**
-   - 1-hour localStorage TTL
-   - Reduces blockchain queries by 80%
-   - Faster UX
-
-5. **OTC Trading Enhancement**
-   - Human-readable marketplace
-   - Trader identity visible
-   - Professional appearance
-
-**Creative:**
-- Not just showing names - we use text records for reputation
-- Cross-chain architecture (Polygon + Mainnet)
-- Solves real UX problem in OTC trading
-- Performance optimization with caching
-- Full trader profile system
+No additional ENS-specific packages required. All resolution via wagmi + viem built-ins.
 
 ---
 
-### Test Scenario 1: Wallet Connection
-**Steps:**
-1. Connect wallet (MetaMask recommended)
-2. Look at top-right header
-
-**Expected Result:**
-- If wallet has ENS: Shows name + avatar (e.g., "🎭 alice.eth")
-- If no ENS: Shows shortened address (e.g., "0xA1B2...C3D4")
-
-### Test Scenario 2: OTC Marketplace
-**Steps:**
-1. Navigate to OTC page
-2. Browse trade cards
-
-**Expected Result:**
-- Trader names shown (e.g., "alice.eth" instead of "0x...")
-- Avatars displayed
-- Social badges visible (Twitter, GitHub icons)
-
-### Test Scenario 3: ENS Input Validation
-**Steps:**
-1. Go to Dashboard → Create Buy Order
-2. Find "Receiver Address" field
-3. Type: `vitalik.eth`
-
-**Expected Result:**
-```
-Input border: Blue → Spinner appears
-After 1-2 sec: Green border → Checkmark ✓
-Below input: "Resolved to: 0xd8dA...96045"
-```
-
-**Try invalid:**
-1. Type: `faketest.eth`
-2. Result: Red X + "ENS name not found"
-
-### Test Scenario 4: Social Profiles
-**Steps:**
-1. Click on any trader with ENS
-2. View profile modal/page
-
-**Expected Result:**
-- Avatar displayed
-- ENS name shown
-- Social media links (Twitter, GitHub, Website)
-- Clickable badges that open in new tab
-
-### Test Scenario 5: Real ENS Names
-
-**Use these verified ENS names for testing:**
-```
-✅ vitalik.eth     → Vitalik Buterin (Ethereum creator)
-✅ nick.eth        → Nick Johnson (ENS creator)
-✅ brantly.eth     → Brantly Millegan
-✅ ricmoo.eth      → Richard Moore (Ethers.js)
-
-❌ faketest.eth    → Should show "not found"
-```
----
-
-## 🏁 Conclusion
-
-**SettleX's ENS integration achieves:**
-
-✨ **Better UX** - Human-readable names instead of addresses  
-🛡️ **Enhanced Security** - Reduced errors, verified identities  
-🤝 **Trust Building** - Social profiles for trader reputation  
-🚀 **Professional Platform** - Looks like a real product  
-💡 **Innovation** - Creative use of text records for DeFi  
-
-**Total Impact:**
-- 1,500+ lines of custom code
-- 10+ integration points
-- 4 new components
-- Cross-chain architecture
-- Production-ready implementation
-
-
----
-**Built with ❤️ for the ENS ecosystem**
+*SettleX — ENS as the identity and preferences layer for peer-to-peer OTC trading.*

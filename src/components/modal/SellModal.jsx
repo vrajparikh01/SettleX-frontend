@@ -8,6 +8,7 @@ import { useAccount } from "wagmi";
 import Loading from "../../assets/icons/loading";
 import { formatNumber, stringToNumber } from "../../utils";
 import EnsInput from "../common/EnsInput";
+import EnsTraderCard from "../common/EnsTraderCard";
 
 function SellModal({ closeModal, onConfirmClick, loading = false }) {
   const account = useAccount();
@@ -20,6 +21,7 @@ function SellModal({ closeModal, onConfirmClick, loading = false }) {
   const [totalToken, setTotalToken] = useState();
   const [pricePerToken, setPricePerToken] = useState();
   const [receiverAddress, setReceiverAddress] = useState(account?.address || "");
+  const [ensCounterparty, setEnsCounterparty] = useState(null); // address resolved from ENS name
 
   async function getTokenList() {
     try {
@@ -133,13 +135,25 @@ function SellModal({ closeModal, onConfirmClick, loading = false }) {
                 </p>
                 <EnsInput
                   value={receiverAddress}
-                  onChange={setReceiverAddress}
+                  onChange={(addr) => {
+                    setReceiverAddress(addr);
+                    setEnsCounterparty(null);
+                  }}
+                  onEnsResolved={({ address }) => setEnsCounterparty(address)}
                   placeholder="vitalik.eth or 0x..."
                   disabled={loading}
                 />
                 <p className="text-xs text-gray500 dark:text-gray500Dark mt-1">
                   Leave empty to use your connected wallet
                 </p>
+                {ensCounterparty && (
+                  <div className="mt-3 p-3 bg-gray100 dark:bg-gray100Dark border border-gray200 dark:border-gray200Dark rounded-[14px]">
+                    <p className="text-[10px] font-semibold text-gray500 dark:text-gray500Dark uppercase tracking-wider mb-2">
+                      Counterparty Profile
+                    </p>
+                    <EnsTraderCard address={ensCounterparty} label="Counterparty" />
+                  </div>
+                )}
               </div>
               <div className="flex gap-x-[10px]">
                 <div className="flex flex-col flex-1">

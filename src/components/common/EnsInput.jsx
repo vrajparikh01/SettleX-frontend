@@ -61,6 +61,7 @@ function EnsInput({
       setValidationStatus("invalid");
     } else {
       setValidationStatus("");
+      onChange(""); // clear parent value when input is emptied
     }
   }, [inputValue, isEns, isAddress, resolvedAddress, isLoading, error]);
 

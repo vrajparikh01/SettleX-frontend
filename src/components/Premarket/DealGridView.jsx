@@ -5,6 +5,7 @@ import LavaLogo from "../../assets/images/LavaLogo.png";
 import CircularProgress from "../common/CircularProgress";
 import { formatStringToNumber } from "../../utils";
 import EnsDisplay from "../common/EnsDisplay";
+import EnsReputationBadge from "../common/EnsReputationBadge";
 
 function DealGridView({
   total_token,
@@ -81,12 +82,17 @@ function DealGridView({
         <div className="flex items-center gap-x-2">
           <CircularProgress percentage={completion_percentage} />
           {receiver_wallet_address && (
-            <EnsDisplay 
-              address={receiver_wallet_address}
-              showAvatar={true}
-              avatarClassName="w-5 h-5"
-              className="text-xs"
-            />
+            <div className="flex flex-col gap-y-[3px]">
+              <div className="flex items-center gap-x-[6px]">
+                <EnsDisplay
+                  address={receiver_wallet_address}
+                  showAvatar={true}
+                  avatarClassName="w-5 h-5"
+                  className="text-xs"
+                />
+                <EnsReputationBadge address={receiver_wallet_address} compact={true} />
+              </div>
+            </div>
           )}
         </div>
         <div className="flex items-center gap-x-[6px]">

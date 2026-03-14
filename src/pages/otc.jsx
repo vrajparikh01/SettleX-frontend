@@ -13,6 +13,7 @@ import {
 } from "../assets/icons";
 import OtcGrid from "../components/OtcGrid";
 import OtcList from "../components/OtcList";
+import { useEnsResolver, useEnsReputationScore, isValidEnsName } from "../hooks/useEns";
 import SuccessModal from "../components/modal/SuccessModal";
 import Banner from "../components/Otc/Banner";
 import Dropdown from "../components/common/Dropdown";
@@ -87,13 +88,46 @@ function Otc() {
   const [page, setPage] = useState(1);
   const [totalTokens, setTotalTokens] = useState(0);
 
+  // A3: ENS-only filter toggle
+  const [ensOnlyFilter, setEnsOnlyFilter] = useState(false);
+  // A7: ENS name search — separate from token name search
+  const [searchValue, setSearchValue] = useState("");
+  const isEnsSearch = isValidEnsName(searchValue);
+  // A7: Resolve typed ENS name to address for client-side filtering
+  const { address: ensSearchAddress, isLoading: ensSearchLoading } = useEnsResolver(
+    isEnsSearch ? searchValue : null
+  );
+  // A8: Read current user's settlex.prefs to highlight matching trades
+  const { prefs: myPrefs } = useEnsReputationScore(account?.address);
+
   let debouncedDataget = applyDebounce(async (value) => {
-    console.log("Here", value);
-    getTrades(page, value);
+    // A7: If input is an ENS name, don't send to API — filter client-side instead
+    if (!isValidEnsName(value)) {
+      getTrades(page, value);
+    }
   }, 1000);
 
   const handleInput = async (e) => {
-    debouncedDataget(e.target.value);
+    const val = e.target.value;
+    setSearchValue(val);
+    debouncedDataget(val);
+  };
+
+  // A7: Client-side filtered list when searching by ENS name
+  const displayedTrades = isEnsSearch && ensSearchAddress
+    ? (tradeList || []).filter(
+        (t) => t.receiver_wallet_address?.toLowerCase() === ensSearchAddress.toLowerCase()
+      )
+    : tradeList;
+
+  // A8: Check if a trade matches the logged-in user's ENS token preferences
+  const matchesPref = (trade) => {
+    if (!myPrefs?.tokens?.length) return false;
+    const tokens = myPrefs.tokens.map((t) => t.toUpperCase());
+    return (
+      tokens.includes(trade.offer_token?.symbol?.toUpperCase()) ||
+      tokens.includes(trade.receive_token?.symbol?.toUpperCase())
+    );
   };
 
   async function callApprove(numberOfToken, numberOfDecimal, tokenAddress) {
@@ -591,33 +625,72 @@ function Otc() {
                   <ListIcon isActive={!isGridView} />
                 </span>
               </div>
-              <div className="flex items-center px-3 py-[11.5px] w-[50%] md:w-[16vw] text-sm font-medium text-baseWhiteDark dark:text-baseWhite bg-baseWhite dark:bg-black border rounded-full outline-none gap-x-2 border-gray300 dark:border-gray300Dark">
-                <span className="w-4 h-4">
+              {/* A7: Search accepts ENS names (alice.eth) or token names */}
+              <div className={`flex items-center px-3 py-[11.5px] w-[50%] md:w-[16vw] text-sm font-medium text-baseWhiteDark dark:text-baseWhite bg-baseWhite dark:bg-black border rounded-full outline-none gap-x-2 transition-colors ${
+                isEnsSearch
+                  ? ensSearchLoading
+                    ? "border-primary1000 animate-pulse"
+                    : ensSearchAddress
+                    ? "border-emerald-500"
+                    : "border-red-400"
+                  : "border-gray300 dark:border-gray300Dark"
+              }`}>
+                <span className="w-4 h-4 flex-shrink-0">
                   <SearchIcon />
                 </span>
                 <input
-                  className="text-sm leading-[19px] text-baseWhiteDark dark:text-baseWhite bg-transparent outline-none placeholder:text-gray500"
-                  placeholder="Search"
-                  onChange={(e) => {
-                    handleInput(e);
-                  }}
+                  className="text-sm leading-[19px] text-baseWhiteDark dark:text-baseWhite bg-transparent outline-none placeholder:text-gray500 w-full"
+                  placeholder="Search or alice.eth"
+                  onChange={handleInput}
                 />
               </div>
+              {/* A3: ENS-only filter toggle */}
+              <button
+                onClick={() => setEnsOnlyFilter((v) => !v)}
+                className={`hidden md:flex items-center gap-x-[6px] px-3 py-[10px] rounded-full border text-xs font-semibold transition-all ${
+                  ensOnlyFilter
+                    ? "bg-emerald-500/10 border-emerald-500/40 text-emerald-500"
+                    : "bg-baseWhite dark:bg-black border-gray300 dark:border-gray300Dark text-gray500 dark:text-gray500Dark"
+                }`}
+                title="Show only traders with ENS names"
+              >
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" />
+                </svg>
+                ENS only
+              </button>
             </div>
           </div>
           <div className="flex p-[10px] pt-4 md:p-5 md:pt-5">
             {isGridView ? (
               <div className="w-full">
-                {tradeList && tradeList?.length ? (
+                {/* A7: show ENS search status */}
+                {isEnsSearch && (
+                  <p className="text-xs text-gray500 dark:text-gray500Dark mb-3 px-1">
+                    {ensSearchLoading ? "Resolving ENS name…" : ensSearchAddress
+                      ? `Showing trades by ${searchValue} (${ensSearchAddress.substring(0, 8)}…)`
+                      : `No ENS name found for "${searchValue}"`}
+                  </p>
+                )}
+                {/* A8: show preference match hint */}
+                {myPrefs?.tokens?.length > 0 && (
+                  <p className="text-xs text-emerald-500 mb-3 px-1 flex items-center gap-x-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" /></svg>
+                    Green border = matches your ENS preferences ({myPrefs.tokens.join(", ")})
+                  </p>
+                )}
+                {displayedTrades && displayedTrades?.length ? (
                   <div className="w-full">
                     <div className="grid flex-1 grid-cols-1 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-x-3 gap-y-3 md:gap-x-4 md:gap-y-4">
-                      {tradeList?.map((item, index) => {
+                      {displayedTrades?.map((item, index) => {
                         return (
                           <OtcGrid
                             {...item}
                             key={index}
                             isBuy={item?.trade_type}
                             user_wallet={account?.address || ""}
+                            hideIfNoEns={ensOnlyFilter}
+                            highlightMatch={matchesPref(item)}
                             onButtonClick={() => {
                               console.log("Item", item);
                               setSelectedTrade(item);
@@ -663,15 +736,17 @@ function Otc() {
                   <p className="justify-self-end">Action</p>
                 </div>
                 <div className="flex flex-col gap-y-3">
-                  {tradeList && tradeList?.length ? (
+                  {displayedTrades && displayedTrades?.length ? (
                     <div className="flex flex-col gap-y-3">
-                      {tradeList.map((item, index) => {
+                      {displayedTrades.map((item, index) => {
                         return (
                           <OtcList
                             {...item}
                             key={index}
                             isBuy={item?.trade_type}
                             user_wallet={account?.address || ""}
+                            hideIfNoEns={ensOnlyFilter}
+                            highlightMatch={matchesPref(item)}
                             onButtonClick={() => {
                               setSelectedTrade(item);
                               if (item?.trade_type) {

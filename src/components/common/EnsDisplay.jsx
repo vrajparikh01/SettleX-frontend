@@ -20,7 +20,7 @@ function EnsDisplay({
   avatarClassName = "",
   copyable = false,
 }) {
-  const { ensName, avatar, isLoading } = useEnsProfile(address);
+  const { ensName, avatar, isLoading, isVerified } = useEnsProfile(address);
 
   const handleCopy = () => {
     if (copyable && address) {
@@ -80,10 +80,20 @@ function EnsDisplay({
           </span>
         ) : (
           <>
-            <span className="font-medium text-baseWhiteDark dark:text-baseWhite">
+            <span className="flex items-center gap-x-1 font-medium text-baseWhiteDark dark:text-baseWhite">
               {displayText}
+              {/* A2: Verified checkmark — forward + reverse ENS resolution both match */}
+              {isVerified && (
+                <svg
+                  className="w-3 h-3 text-emerald-500 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  title="ENS Verified — forward and reverse resolution match"
+                >
+                  <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              )}
             </span>
-            {/* Show address below ENS name if requested */}
             {ensName && showAddress && (
               <span className="text-xs text-gray500 dark:text-gray500Dark">
                 {shortAddress}
